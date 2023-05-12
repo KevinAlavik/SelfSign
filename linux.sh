@@ -1,12 +1,16 @@
 #!/bin/bash
+rm -rf SelfSign
 
 zsign_url="https://github.com/zhlynn/zsign.git"
 
 echo -e "SelfSign Setup, \e[32mLinux Script\e[0m"
 echo "Starting the main process"
 
+mkdir SelfSign
+cd SelfSign
+
 clone_zsign() {
-  output=$(git clone "$zsign_url" SelfSign/zsign 2>&1)
+  output=$(git clone "$zsign_url" zsign 2>&1)
   lines=$(echo "$output" | wc -l)
   count=0
 
@@ -26,16 +30,23 @@ clone_zsign() {
 }
 
 generate_static() {
-    mkdir SelfSign/static
-    cd SelfSign/static
+    mkdir static
+    cd static
     echo "echo 'Hello, World!'" > index.php
     touch style.css
 }
 
 compile_zsign() {
-    cd SelfSign/zsign && chmod +x INSTALL.sh && ./INSTALL.sh
+    cd ../zsign 
+    chmod +x INSTALL.sh 
+    ./INSTALL.sh
 }
 
+main() {
 clone_zsign
 generate_static
+sleep 2
 compile_zsign
+}
+
+main
