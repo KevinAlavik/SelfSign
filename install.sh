@@ -292,7 +292,7 @@ install_packages() {
 
 compile_zsign() {
   cd ../zsign
-  g++ *.cpp common/*.cpp -std=gnu++11 -I/usr/include/openssl-1.1 -L/usr/lib/openssl-1.1 -lssl -lcrypto -O3 -o zsign -w
+  g++ *.cpp common/*.cpp -std=gnu++11 -lcrypto -I/usr/local/Cellar/openssl@1.1/1.1.1k/include -L/usr/local/Cellar/openssl@1.1/1.1.1k/lib -O3 -o zsign
   sudo mv zsign ../site/zsign
   cd ..
   sudo rm -rf zsign
