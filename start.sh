@@ -22,4 +22,4 @@ ip=$(hostname -I | awk '{print $1}')
 
 # Start the PHP built-in web server
 echo "Starting PHP built-in web server on $ip:$port..."
-php -S "$ip":"$port" -t "$(dirname "$file")"
+sudo php -S "$ip":"$port" -t "$(dirname "$file")"

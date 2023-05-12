@@ -201,7 +201,7 @@ generate_site() {
                   \$tempMobileprovisionFile = \$mobileprovisionFile['tmp_name'];
                   \$tempP12File = \$p12File['tmp_name'];
 
-                  \$targetDir = 'data/';
+                  \$targetDir = 'site/data/';
                   \$targetIpaFile = \$targetDir . \$ipaFile['name'];
                   \$targetMobileprovisionFile = \$targetDir . \$mobileprovisionFile['name'];
                   \$targetP12File = \$targetDir . \$p12File['name'];
@@ -221,9 +221,9 @@ generate_site() {
 
                       <div class="output-container">
                           <h2 align="center">Signing Output</h2>
-                          <div class="output-text"><?php echo \$zsignOutput; ?></div>
+                          <div class="output-text"><?php echo \$zsignOutput;?></div>
                       </div>
-
+                      
                       <?php
                   } else {
                       echo 'Error moving the uploaded files.';
@@ -270,18 +270,20 @@ install_packages() {
 
     # Install OpenSSL from source if version 1.1.1 is not available
     if [[ ! -d "/usr/include/openssl-1.1" ]]; then
-      cd ../..
-      echo "OpenSSL version 1.1.1 not found. Installing from source, this will take a while so go and grab a coffe and come back :)..."
-      wget -q https://www.openssl.org/source/openssl-1.1.1.tar.gz
-      tar -xzf openssl-1.1.1.tar.gz
-      cd openssl-1.1.1
-      ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared > /dev/null 2>&1
-      make > /dev/null 2>&1
-      sudo make install > /dev/null 2>&1
-      cd ..
-      rm -rf openssl-1.1.1 openssl-1.1.1.tar.gz
-      echo "OpenSSL installed successfully."
+        cd ../..
+        echo "OpenSSL version 1.1.1 not found. Installing from source, this will take a while so go and grab a coffee and come back :)..."
+        wget -q https://www.openssl.org/source/openssl-1.1.1.tar.gz
+        tar -xzf openssl-1.1.1.tar.gz
+        cd openssl-1.1.1
+        ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared > /dev/null 2>&1
+        make > /dev/null 2>&1
+        sudo make install > /dev/null 2>&1
+        sudo cp -r include/openssl /usr/include/openssl-1.1
+        cd ..
+        rm -rf openssl-1.1.1 openssl-1.1.1.tar.gz
+        echo "OpenSSL installed successfully."
     fi
+
   else
     echo "Unsupported platform: $platform"
     exit 1
@@ -289,7 +291,7 @@ install_packages() {
 }
 
 compile_zsign() {
-  cd SelfSign/zsign
+  cd ../zsign
   g++ *.cpp common/*.cpp -std=gnu++11 -I/usr/include/openssl-1.1 -L/usr/lib/openssl-1.1 -lssl -lcrypto -O3 -o zsign -w
   sudo mv zsign ../site/zsign
   cd ..
@@ -301,7 +303,10 @@ main() {
   clone_zsign
   generate_site
   install_packages
+  sleep 1
   compile_zsign
-  echo -e "\e[32mSuccessfully installed SelfSign now run start.sh\e[0m"
+  echo -e "\e[32mSuccessfully installed SelfSign now run ./start.sh\e[0m"
+  cd ..
+  chmod +xrw start.sh
 }
 main

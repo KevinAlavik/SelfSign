@@ -14,7 +14,7 @@ chmod +x windows.sh && ./windows.sh
 # Using
 When you have installed SelfSign run:
 ```bash
-chmod +x start.sh && sudo ./start.sh 
+./start.sh 
 ```
 This is the script that you want running 24/7 on an server or another computer.
 
