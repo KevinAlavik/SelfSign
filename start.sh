@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the desired port number
-port=1300
+port=${PORT:-1300}
 
 # Check if PHP is installed
 if ! command -v php >/dev/null 2>&1; then
@@ -9,27 +9,20 @@ if ! command -v php >/dev/null 2>&1; then
     exit 1
 fi
 
-file='SelfSign/site/index.php'
+# Determine the IP address of the container
+ip=$(hostname -i)
 
 # Check if the PHP file exists
+file='/app/SelfSign/site/index.php'
 if [ ! -f "$file" ]; then
     echo "The provided PHP file does not exist."
     exit 1
 fi
 
-# Determine the platform
-platform=$(uname)
-
-# Get the computer's IP address based on the platform
-if [[ "$platform" == "Darwin" ]]; then
-    ip=$(ipconfig getifaddr en0)
-elif [[ "$platform" == "Linux" ]]; then
-    ip=$(hostname -I | awk '{print $1}')
-else
-    echo "Unsupported platform: $platform"
-    exit 1
-fi
+# Grant permissions to the target directory for file uploads
+target_directory='/app/SelfSign/site/data'
+chmod 777 "$target_directory"
 
 # Start the PHP built-in web server
 echo "Starting PHP built-in web server on $ip:$port..."
-sudo php -S "$ip":"$port" -t "$(dirname "$file")"
+php -d post_max_size=-1 -d upload_max_filesize=-1 -S "$ip":"$port" -t "$(dirname "$file")"

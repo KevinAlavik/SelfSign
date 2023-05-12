@@ -2,19 +2,9 @@
 Self hosted sideloading website for iOS 
 
 ## Installing
-### On linux && Mac:
 ```bash
-chmod +x install.sh && ./install.sh
-```
-### On Windows:
-```bash
-chmod +x windows.sh && ./windows.sh
-```
-
-# Using
-When you have installed SelfSign run:
-```bash
-./start.sh 
+docker build -t selfsign-image .
+docker run -p 1300:1300 selfsign-image
 ```
 This is the script that you want running 24/7 on an server or another computer.
 
@@ -33,5 +23,5 @@ SelfSign wouldnt work without [zsign](https://github.com/zhlynn/zsign)
 | OS | Status |
 |----|----|
 | Linux | ✅ |
-| Mac | ❓ |
+| Mac | ✅ |
 | Windows | ❌ |
