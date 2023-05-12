@@ -26,5 +26,12 @@ Example: `192.158.1.38:13`
 
 **So SelfSign is hosted on port ** ***13***
 
-# Libraries
+# Credit
 SelfSign wouldnt work without [zsign](https://github.com/zhlynn/zsign)
+
+# Status
+| OS | Status |
+|----|----|
+| Linux | ✅ |
+| Mac | ❓ |
+| Windows | ❌ |
