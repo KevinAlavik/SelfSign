@@ -10,7 +10,7 @@ mkdir SelfSign
 cd SelfSign
 
 clone_zsign() {
-  
+
   output=$(git clone "$zsign_url" zsign 2>&1)
   lines=$(echo "$output" | wc -l)
   count=0
@@ -35,29 +35,159 @@ generate_site() {
   cd site
   cat <<EOF >index.php
 <!DOCTYPE html>
-<html lang="eng">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SelfSign</title>
-    <link rel="stylesheet" href="style.css">
+    <title>SelfSign Signing Site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+        
+        h1, h2 {
+            color: #333333;
+            text-align: center;
+        }
+        
+        form {
+            width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        
+        input[type="file"] {
+            margin-top: 5px;
+        }
+        
+        input[type="password"] {
+            margin-top: 10px;
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        
+        button[type="submit"] {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        p {
+          text-align: center
+        }
+                body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        h1, h2 {
+            color: #333333;
+            text-align: center;
+        }
+
+        .container {
+            width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="file"] {
+            margin-top: 5px;
+        }
+
+        input[type="password"] {
+            margin-top: 10px;
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .output-container {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .output-text {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
     <h1>SelfSign Signing Site</h1>
-    <p>This is under developement.</p>
-    <h2>Upload files to sign</h2>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="ipa_file" accept=".ipa" required>Select IPA</input>
-        <br>
-        <input type="file" name="mobileprovision_file" accept=".mobileprovision" required>Select Mobileprovision</input>
-        <br>
-        <input type="file" name="p12_file" accept=".p12" required>Select p12 File</input>
-        <br>
-        <input type="password" name="password" placeholder="Password" required></input>
-        <br>
-        <button type="submit">Upload .ipa</button>
-    </form>
+        <h2>Upload files to sign</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <label>
+                Select IPA:
+                <br>
+                <input type="file" name="ipa_file" accept=".ipa" required>
+            </label>
+
+            <label>
+                Select Mobileprovision:
+                <br>
+                <input type="file" name="mobileprovision_file" accept=".mobileprovision" required>
+            </label>
+
+            <label>
+                Select p12 File:
+                <br>
+                <input type="file" name="p12_file" accept=".p12" required>
+            </label>
+
+            <label>
+                Password:
+                <input type="password" name="password" placeholder="Password" required>
+            </label>
+
+            <button type="submit">Sign</button>
+        </form>
     <?php
       if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
           if (isset(\$_FILES['ipa_file']) && isset(\$_FILES['mobileprovision_file']) && isset(\$_FILES['p12_file']) && isset(\$_POST['password'])) {
@@ -65,30 +195,36 @@ generate_site() {
               \$mobileprovisionFile = \$_FILES['mobileprovision_file'];
               \$p12File = \$_FILES['p12_file'];
               \$password = \$_POST['password'];
-              
+
               if (\$ipaFile['error'] === UPLOAD_ERR_OK && \$mobileprovisionFile['error'] === UPLOAD_ERR_OK && \$p12File['error'] === UPLOAD_ERR_OK) {
                   \$tempIpaFile = \$ipaFile['tmp_name'];
                   \$tempMobileprovisionFile = \$mobileprovisionFile['tmp_name'];
                   \$tempP12File = \$p12File['tmp_name'];
-                  
+
                   \$targetDir = 'data/';
                   \$targetIpaFile = \$targetDir . \$ipaFile['name'];
                   \$targetMobileprovisionFile = \$targetDir . \$mobileprovisionFile['name'];
                   \$targetP12File = \$targetDir . \$p12File['name'];
-                  
+
                   // Create the target directory if it doesn't exist
                   if (!is_dir(\$targetDir)) {
                       mkdir(\$targetDir, 0777, true);
                   }
-                  
+
                   // Move the uploaded files to the target directory
                   if (move_uploaded_file(\$tempIpaFile, \$targetIpaFile) &&
                       move_uploaded_file(\$tempMobileprovisionFile, \$targetMobileprovisionFile) &&
                       move_uploaded_file(\$tempP12File, \$targetP12File)) {
-                      
-                      \$zsign = shell_exec("./zsign \$targetIpaFile -k \$targetP12File -m \$targetMobileprovisionFile -o signed/signed.ipa -p \$password");
-                      echo 'File uploaded successfully!';
-                      echo "<pre>\$zsign</pre>";
+
+                      \$zsignOutput = shell_exec("./zsign \$targetIpaFile -k \$targetP12File -m \$targetMobileprovisionFile -o signed/signed.ipa -p \$password");
+                      ?>
+
+                      <div class="output-container">
+                          <h2 align="center">Signing Output</h2>
+                          <div class="output-text"><?php echo \$zsignOutput; ?></div>
+                      </div>
+
+                      <?php
                   } else {
                       echo 'Error moving the uploaded files.';
                   }
@@ -103,15 +239,16 @@ generate_site() {
 </body>
 </html>
 EOF
-  touch style.css
 }
 
 compile_zsign() {
   cd ../zsign
-  chmod +x INSTALL.sh
-  sudo ./INSTALL.sh
-  sudo mv build/zsign ../site/zsign
-  cd ../
+  mkdir build
+  cd build
+  cmake ..
+  make
+  sudo mv zsign ../../site/zsign
+  cd ../..
   sudo rm -rf zsign
   echo "Successfully built zsign"
 }
