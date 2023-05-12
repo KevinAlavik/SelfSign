@@ -241,14 +241,43 @@ generate_site() {
 EOF
 }
 
+platform=$(uname)
+
+# Install required packages
+install_packages() {
+  if [[ "$platform" == "Darwin" ]]; then
+    # macOS
+    brew update
+    brew install openssl
+  elif [[ "$platform" == "Linux" ]]; then
+    # Linux
+    if [[ -x "$(command -v apt-get)" ]]; then
+      # Debian-based distributions
+      sudo apt-get update
+      sudo apt-get install -y g++ openssl libssl-dev
+    elif [[ -x "$(command -v yum)" ]]; then
+      # Red Hat-based distributions
+      sudo yum update
+      sudo yum install -y gcc-c++ openssl openssl-devel
+    elif [[ -x "$(command -v dnf)" ]]; then
+      # Fedora distributions
+      sudo dnf update
+      sudo dnf install -y gcc-c++ openssl openssl-devel
+    else
+      echo "Package manager not found. Please install the required packages manually."
+      exit 1
+    fi
+  else
+    echo "Unsupported platform: $platform"
+    exit 1
+  fi
+}
+
 compile_zsign() {
   cd ../zsign
-  mkdir build
-  cd build
-  cmake ..
-  make
-  sudo mv zsign ../../site/zsign
-  cd ../..
+  g++ *.cpp common/*.cpp -std=gnu++11 -I/usr/include/openssl-1.1 -L/usr/lib/openssl-1.1 -lssl -lcrypto -O3 -o zsign -w
+  sudo mv zsign ../site/zsign
+  cd ..
   sudo rm -rf zsign
   echo "Successfully built zsign"
 }
@@ -256,8 +285,7 @@ compile_zsign() {
 main() {
   clone_zsign
   generate_site
-  sleep 2
+  install_packages
   compile_zsign
 }
-
 main
