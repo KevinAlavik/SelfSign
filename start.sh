@@ -17,6 +17,9 @@ if [ ! -f "$file" ]; then
     exit 1
 fi
 
+# Get the computer's IP address
+ip=$(hostname -I | awk '{print $1}')
+
 # Start the PHP built-in web server
-echo "Starting PHP built-in web server on port $port..."
-php -S localhost:"$port" -t "$(dirname "$file")"
+echo "Starting PHP built-in web server on $ip:$port..."
+php -S "$ip":"$port" -t "$(dirname "$file")"
