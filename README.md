@@ -24,7 +24,7 @@ Go to `127.0.0.1:13` to get to the site on the host (the computer running start.
 
 Example: `192.158.1.38:13`
 
-**So SelfSign is hosted on port ** ***13***
+**So SelfSign is hosted on port** ***13***
 
 # Credit
 SelfSign wouldnt work without [zsign](https://github.com/zhlynn/zsign)
