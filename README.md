@@ -14,7 +14,7 @@ chmod +x windows.sh && ./windows.sh
 # Using
 When you have installed SelfSign run:
 ```bash
-chmod +x start.sh && ./start.sh SelfSign/static/index.php
+chmod +x start.sh && sudo ./start.sh 
 ```
 This is the script that you want running 24/7 on an server or another computer.
 
@@ -23,3 +23,6 @@ Go to 127.0.0.1:13 to get to the site on the host (the computer running start.sh
 **To get your computers ip run ifconfig (on linux and mac) and ipconfig (on windows)**
 
 Example: 192.158.1.38:13
+
+# Libraries
+SelfSign wouldnt work without [zsign](https://github.com/zhlynn/zsign)

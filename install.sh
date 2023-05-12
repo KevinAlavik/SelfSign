@@ -3,13 +3,14 @@ sudo rm -rf SelfSign
 
 zsign_url="https://github.com/zhlynn/zsign.git"
 
-echo -e "SelfSign Setup, \e[32mLinux Script\e[0m"
+echo -e "SelfSign, \e[32mInstall Script\e[0m"
 echo "Starting the main process"
 
 mkdir SelfSign
 cd SelfSign
 
 clone_zsign() {
+  
   output=$(git clone "$zsign_url" zsign 2>&1)
   lines=$(echo "$output" | wc -l)
   count=0
@@ -29,9 +30,9 @@ clone_zsign() {
   echo "Cloning progress: [==================================================> 100%]"
 }
 
-generate_static() {
-  mkdir static
-  cd static
+generate_site() {
+  mkdir site
+  cd site
   cat <<EOF >index.php
 <!DOCTYPE html>
 <html lang="eng">
@@ -45,8 +46,59 @@ generate_static() {
 <body>
     <h1>SelfSign Signing Site</h1>
     <p>This is under developement.</p>
+    <h2>Upload files to sign</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="ipa_file" accept=".ipa" required>Select IPA</input>
+        <br>
+        <input type="file" name="mobileprovision_file" accept=".mobileprovision" required>Select Mobileprovision</input>
+        <br>
+        <input type="file" name="p12_file" accept=".p12" required>Select p12 File</input>
+        <br>
+        <input type="password" name="password" placeholder="Password" required></input>
+        <br>
+        <button type="submit">Upload .ipa</button>
+    </form>
     <?php
-        echo "Soon";
+      if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
+          if (isset(\$_FILES['ipa_file']) && isset(\$_FILES['mobileprovision_file']) && isset(\$_FILES['p12_file']) && isset(\$_POST['password'])) {
+              \$ipaFile = \$_FILES['ipa_file'];
+              \$mobileprovisionFile = \$_FILES['mobileprovision_file'];
+              \$p12File = \$_FILES['p12_file'];
+              \$password = \$_POST['password'];
+              
+              if (\$ipaFile['error'] === UPLOAD_ERR_OK && \$mobileprovisionFile['error'] === UPLOAD_ERR_OK && \$p12File['error'] === UPLOAD_ERR_OK) {
+                  \$tempIpaFile = \$ipaFile['tmp_name'];
+                  \$tempMobileprovisionFile = \$mobileprovisionFile['tmp_name'];
+                  \$tempP12File = \$p12File['tmp_name'];
+                  
+                  \$targetDir = 'data/';
+                  \$targetIpaFile = \$targetDir . \$ipaFile['name'];
+                  \$targetMobileprovisionFile = \$targetDir . \$mobileprovisionFile['name'];
+                  \$targetP12File = \$targetDir . \$p12File['name'];
+                  
+                  // Create the target directory if it doesn't exist
+                  if (!is_dir(\$targetDir)) {
+                      mkdir(\$targetDir, 0777, true);
+                  }
+                  
+                  // Move the uploaded files to the target directory
+                  if (move_uploaded_file(\$tempIpaFile, \$targetIpaFile) &&
+                      move_uploaded_file(\$tempMobileprovisionFile, \$targetMobileprovisionFile) &&
+                      move_uploaded_file(\$tempP12File, \$targetP12File)) {
+                      
+                      \$zsign = shell_exec("./zsign \$targetIpaFile -k \$targetP12File -m \$targetMobileprovisionFile -o signed/signed.ipa -p \$password");
+                      echo 'File uploaded successfully!';
+                      echo "<pre>\$zsign</pre>";
+                  } else {
+                      echo 'Error moving the uploaded files.';
+                  }
+              } else {
+                  echo 'Error uploading files. Please try again.';
+              }
+          } else {
+              echo 'Please upload all required files and provide a password.';
+          }
+      }
     ?>
 </body>
 </html>
@@ -58,8 +110,7 @@ compile_zsign() {
   cd ../zsign
   chmod +x INSTALL.sh
   sudo ./INSTALL.sh
-  sudo mkdir ../backend
-  sudo mv build/zsign ../backend/zsign
+  sudo mv build/zsign ../site/zsign
   cd ../
   sudo rm -rf zsign
   echo "Successfully built zsign"
@@ -67,7 +118,7 @@ compile_zsign() {
 
 main() {
   clone_zsign
-  generate_static
+  generate_site
   sleep 2
   compile_zsign
 }

@@ -9,14 +9,7 @@ if ! command -v php >/dev/null 2>&1; then
     exit 1
 fi
 
-# Check if a PHP file is provided as an argument
-if [ $# -eq 0 ]; then
-    echo "Please provide a PHP file as an argument."
-    exit 1
-fi
-
-# Get the absolute path of the PHP file
-file=$(realpath "$1")
+file='SelfSign/site/index.php'
 
 # Check if the PHP file exists
 if [ ! -f "$file" ]; then
