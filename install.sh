@@ -33,6 +33,7 @@ clone_zsign() {
 generate_site() {
   mkdir site
   cd site
+  mkdir signed
   cat <<EOF >index.php
 <!DOCTYPE html>
 <html>
@@ -217,6 +218,50 @@ generate_site() {
                       move_uploaded_file(\$tempP12File, \$targetP12File)) {
 
                       \$zsignOutput = shell_exec("./zsign \$targetIpaFile -k \$targetP12File -m \$targetMobileprovisionFile -o signed/signed.ipa -p \$password");
+
+                        if (\$zsignOutput !== null) {
+                            \$bundleId = \`echo "\$zsignOutput" | grep -oP '>>> BundleId:\s+\K.+'\`;
+                            \$version = \`echo "\$zsignOutput" | grep -oP '>>> BundleVer:\s+\K.+'\`;
+                            \$appName = \`echo "\$zsignOutput" | grep -oP '>>> AppName:\s+\K.+'\`;
+
+                            shell_exec('
+                                cat <<EOF > signed/signed.plist
+                                <?xml version="1.0" encoding="UTF-8"?>
+                                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                                <plist version="1.0">
+                                <dict>
+                                    <key>items</key>
+                                    <array>
+                                        <dict>
+                                            <key>assets</key>
+                                            <array>
+                                                <dict>
+                                                    <key>kind</key>
+                                                    <string>software-package</string>
+                                                    <key>url</key>
+                                                    <string>http://' . \$_SERVER['SERVER_NAME'] . ':1300/signed/signed.ipa</string>
+                                                </dict>
+                                            </array>
+                                            <key>metadata</key>
+                                            <dict>
+                                                <key>bundle-identifier</key>
+                                                <string>' . \$bundleId . '</string>
+                                                <key>bundle-version</key>
+                                                <string>' . \$version . '</string>
+                                                <key>kind</key>
+                                                <string>software</string>
+                                                <key>title</key>
+                                                <string>' . \$appName . '</string>
+                                            </dict>
+                                        </dict>
+                                    </array>
+                                </dict>
+                                </plist>
+                                EOF
+                                ');
+
+                            header("Location: itms-services://?action=download-manifest&url=http://" . \$_SERVER['SERVER_NAME'] . ":1300/signed/signed.plist");
+                        }
                       ?>
 
                       <div class="output-container">
@@ -248,7 +293,15 @@ install_packages() {
   if [[ "$platform" == "Darwin" ]]; then
     # macOS
     brew update
-    brew install openssl@1.1.1
+    brew install openssl@1.1
+
+    # Add OpenSSL paths to environment variables
+    export LDFLAGS="-L$(brew --prefix openssl@1.1)/lib"
+    export CPPFLAGS="-I$(brew --prefix openssl@1.1)/include -I$(brew --prefix)/include"
+
+    # Update pkg-config paths
+    sudo cp $(brew --prefix openssl@1.1)/lib/pkgconfig/*.pc /usr/local/lib/pkgconfig/
+
   elif [[ "$platform" == "Linux" ]]; then
     # Linux
     if [[ -x "$(command -v apt-get)" ]]; then
@@ -268,21 +321,8 @@ install_packages() {
       exit 1
     fi
 
-    # Install OpenSSL from source if version 1.1.1 is not available
-    if [[ ! -d "/usr/include/openssl-1.1" ]]; then
-        cd ../..
-        echo "OpenSSL version 1.1.1 not found. Installing from source, this will take a while so go and grab a coffee and come back :)..."
-        wget -q https://www.openssl.org/source/openssl-1.1.1.tar.gz
-        tar -xzf openssl-1.1.1.tar.gz
-        cd openssl-1.1.1
-        ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared > /dev/null 2>&1
-        make > /dev/null 2>&1
-        sudo make install > /dev/null 2>&1
-        sudo cp -r include/openssl /usr/include/openssl-1.1
-        cd ..
-        rm -rf openssl-1.1.1 openssl-1.1.1.tar.gz
-        echo "OpenSSL installed successfully."
-    fi
+    # Configure OpenSSL library path
+    export PKG_CONFIG_PATH=/usr/local/ssl/lib/pkgconfig:$PKG_CONFIG_PATH
 
   else
     echo "Unsupported platform: $platform"
@@ -290,9 +330,10 @@ install_packages() {
   fi
 }
 
+
 compile_zsign() {
   cd ../zsign
-  g++ *.cpp common/*.cpp -std=gnu++11 -lcrypto -I/usr/local/Cellar/openssl@1.1/1.1.1k/include -L/usr/local/Cellar/openssl@1.1/1.1.1k/lib -O3 -o zsign
+  g++ *.cpp common/*.cpp -std=gnu++11 -lcrypto -I/usr/local/Cellar/openssl@1.1/1.1.1t/include -L/usr/local/Cellar/openssl@1.1/1.1.1t/lib -O3 -o zsign
   sudo mv zsign ../site/zsign
   cd ..
   sudo rm -rf zsign
